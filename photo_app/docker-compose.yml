@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: photo_app_db
+      POSTGRES_USER: photo_app_user
+      POSTGRES_PASSWORD: ''
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - ./flutter_app/build/web:/usr/share/nginx/html:ro   # Flutter static files
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
